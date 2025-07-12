@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawForge: The Physics Law Discovery Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LawForge</h1>
+            <p class="subtitle">The Physics Law Discovery Engine</p>
+        </header>
+        <main>
+            <p class="description">
+                This tool demonstrates that physical laws are projections of simple,
+                dimensionless postulates. It operates on the theory that "fundamental constants"
+                are coordinate artifacts of our measurement system. Enter a postulate in the form
+                <code>A ~ B * C**2 / D</code> to see its physical realization.
+            </p>
+            <div class="input-group">
+                <input type="text" id="postulateInput" placeholder="e.g., T ~ 1/M" size="40">
+                <button id="deriveButton" onclick="runDerivation()">Derive Law</button>
+            </div>
+            <hr>
+            <h3>Derivation Steps:</h3>
+            <pre><code id="output">Your derived law will appear here...</code></pre>
+        </main>
+        <footer>
+            <p>
+                Based on the principles of The Knowledge Pattern.
+                Created by J. Rogers.
+            </p>
+            <p>
+                <a href="https://github.com/BuckRogers1965/LawForge" target="_blank">View on GitHub</a>
+            </p>
+        </footer>
+    </div>
+
+    <!-- Load Pyodide and our JavaScript -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

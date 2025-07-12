@@ -19,6 +19,7 @@ PLANCK_UNITS = {
     'rho_P': c**7 / (h * G**2),
     'p_P': sqrt(h * c**3 / G),
     'a_P': sqrt(c**7 / (h * G)),
+    'f_P': sqrt(c**5 / (h * G)), # Planck Frequency is 1 / Planck Time
 }
 
 VARIABLE_TO_PLANCK_UNIT = {

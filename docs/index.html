@@ -1,29 +1,63 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>LawForge: The Physics Law Discovery Engine</title>
-<link rel="stylesheet" href="style.css"></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LawForge: The Physics Law Discovery Engine</title>
+    <link rel="stylesheet" href="style.css">
+</head>
 <body>
-<div class="container"><header><h1>LawForge</h1><p class="subtitle">The Physics Law Discovery Engine</p></header><main><p class="description">This tool demonstrates that physical laws are projections of simple, dimensionless postulates. Enter a postulate in the form <code>A ~ B * C**2 / D</code> to see its physical realization.</p>
-<p class="description">Unsure which symbols to use? <a href="#" id="showAxesLink">Click here for a list of allowed axes</a>.</p>
-<div class="input-group"><input type="text" id="postulateInput" placeholder="e.g., T ~ 1/M" size="40"><button id="deriveButton" onclick="runDerivation()">Derive Law</button></div><hr><h3>Derivation Steps:</h3><pre><code id="output">Your derived law will appear here...</code></pre></main><footer><p>Based on the principles of The Knowledge Pattern. Created by J. Rogers.</p><p><a href="https://github.com/BuckRogers1965/LawForge" target="_blank">View on GitHub</a></p></footer></div><script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script><script src="main.js"></script> <!-- The Modal/Popup -->
-<div id="axesModal" class="modal">
-    <div class="modal-content">
-        <span class="close-button">×</span>
-        <h3>Allowed Axes and Symbols</h3>
-        <table>
-            <thead><tr><th>Concept</th><th>Allowed Symbols</th></tr></thead>
-            <tbody>
-                <tr><td>Mass</td><td><code>M</code>, <code>m</code>, <code>M1</code>, <code>M2</code></td></tr>
-                <tr><td>Length / Distance</td><td><code>r</code>, <code>l</code>, <code>x</code>, <code>lambda</code>, <code>r_s</code></td></tr>
-                <tr><td>Time</td><td><code>t</code></td></tr>
-                <tr><td>Temperature</td><td><code>T</code></td></tr>
-                <tr><td>Energy</td><td><code>E</code></td></tr>
-                <tr><td>Force</td><td><code>F</code></td></tr>
-                <tr><td>Power</td><td><code>P</code></td></tr>
-                <tr><td>Density (Energy)</td><td><code>rho</code></td></tr>
-                <tr><td>Momentum</td><td><code>p</code></td></tr>
-                <tr><td>Acceleration</td><td><code>a</code></td></tr>
-                <tr><td>Velocity</td><td><code>v</code></td></tr>
-                <tr><td>Frequency</td><td><code>f</code></td></tr>
-            </tbody>
-        </table>
+    <div class="container">
+        <header>
+            <h1>LawForge</h1>
+            <p class="subtitle">The Physics Law Discovery Engine</p>
+        </header>
+        <main>
+            <p class="description">
+                This tool demonstrates that physical laws are projections of simple, dimensionless postulates.
+                Enter a postulate in the form <code>A ~ B * C**2 / D</code> to see its physical realization.
+            </p>
+            <p class="description">Unsure which symbols to use? <a href="#" id="showAxesLink">Click here for a list of allowed axes</a>.</p>
+            <div class="input-group">
+                <input type="text" id="postulateInput" placeholder="e.g., T ~ 1/M" size="40">
+                <button id="deriveButton" onclick="runDerivation()">Derive Law</button>
+            </div>
+            <hr>
+            <h3>Derivation Steps:</h3>
+            <pre><code id="output">Your derived law will appear here...</code></pre>
+        </main>
+        <footer>
+            <p>Based on the principles of The Knowledge Pattern. Created by J. Rogers.</p>
+            <p><a href="https://github.com/BuckRogers1965/LawForge" target="_blank">View on GitHub</a></p>
+        </footer>
     </div>
-</div></body></html>
+
+    <!-- The Modal/Popup Structure -->
+    <div id="axesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h3>Allowed Axes and Symbols</h3>
+            <table>
+                <thead><tr><th>Concept</th><th>Allowed Symbols</th></tr></thead>
+                <tbody>
+                    <tr><td>Mass</td><td><code>M</code>, <code>m</code>, <code>M1</code>, <code>M2</code></td></tr>
+                    <tr><td>Length / Distance</td><td><code>r</code>, <code>l</code>, <code>x</code>, <code>lambda</code>, <code>r_s</code></td></tr>
+                    <tr><td>Time</td><td><code>t</code></td></tr>
+                    <tr><td>Temperature</td><td><code>T</code></td></tr>
+                    <tr><td>Energy</td><td><code>E</code></td></tr>
+                    <tr><td>Force</td><td><code>F</code></td></tr>
+                    <tr><td>Power</td><td><code>P</code></td></tr>
+                    <tr><td>Density (Energy)</td><td><code>rho</code></td></tr>
+                    <tr><td>Momentum</td><td><code>p</code></td></tr>
+                    <tr><td>Acceleration</td><td><code>a</code></td></tr>
+                    <tr><td>Velocity</td><td><code>v</code></td></tr>
+                    <tr><td>Frequency</td><td><code>f</code></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

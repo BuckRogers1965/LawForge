@@ -172,3 +172,26 @@ postulateInput.addEventListener("keyup", (event) => {
         deriveButton.click();
     }
 });
+
+// --- Modal Popup Logic ---
+const modal = document.getElementById("axesModal");
+const link = document.getElementById("showAxesLink");
+const closeButton = document.querySelector(".close-button");
+
+// When the user clicks the link, open the modal
+link.onclick = function(event) {
+    event.preventDefault(); // Stop the link from trying to navigate
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+closeButton.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal content, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}

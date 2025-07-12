@@ -9,8 +9,3 @@ The real laws of nature are simple proportionalities (e.g., `Energy ~ Mass`). Th
 
 ## How to Use the Live Demo
 A live, interactive version is hosted on GitHub Pages. [Click here to use it now.](https://BuckRogers1965.github.io/LawForge/)
-
-## Local Development
-To run tests locally:
-1. Make sure you have `pytest` installed (`pip install pytest`).
-2. Run the tests from the root directory: `pytest`

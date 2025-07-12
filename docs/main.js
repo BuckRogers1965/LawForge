@@ -39,25 +39,25 @@ def parse_postulate(postulate_string):
 def derive_law_from_postulate(postulate_string):
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-
-        # --- THE FIX: Build a separate, clean "display" equation ---
-        # 1. Create simple symbols for display (e.g., m_P, l_P)
-        display_planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
-        target_planck_key_str = VARIABLE_TO_PLANCK_UNIT.get(str(target_symbol))
-        if not target_planck_key_str: raise ValueError(f"Unknown target variable: {target_symbol}")
-
-        # 2. Build the "display" version of the equation for printing
-        display_lhs = target_symbol / display_planck_symbols[target_planck_key_str]
-        display_subs_dict = {sym: sym / display_planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in expression.free_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-        display_rhs = expression.subs(display_subs_dict)
-        display_eq = sympy.Eq(display_lhs, display_rhs)
-        # --- End of Display Fix ---
         
-        # Now, build the actual equation for calculation with full sqrt definitions
-        calculus_lhs = target_symbol / PLANCK_UNITS[target_planck_key_str]
-        calculus_subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in expression.free_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-        calculus_rhs = expression.subs(calculus_subs_dict)
+        # --- THE FIX: Revert to a simpler, more robust substitution logic ---
+        all_symbols = expression.free_symbols.union({target_symbol})
+        
+        # Build the clean "display" equation
+        display_planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
+        display_subs_dict = {sym: sym / display_planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+        
+        display_lhs = (target_symbol).subs(display_subs_dict)
+        display_rhs = (expression).subs(display_subs_dict)
+        display_eq = sympy.Eq(display_lhs, display_rhs)
+
+        # Build the actual calculus equation for solving
+        calculus_subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+
+        calculus_lhs = (target_symbol).subs(calculus_subs_dict)
+        calculus_rhs = (expression).subs(calculus_subs_dict)
         calculus_eq = sympy.Eq(calculus_lhs, calculus_rhs)
+        # --- End of Fix ---
         
         solution = sympy.solve(calculus_eq, target_symbol)
         if not solution: raise ValueError("Could not solve for the target variable.")
@@ -69,13 +69,13 @@ def derive_law_from_postulate(postulate_string):
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
             f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
             f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
-            f"{sympy.pretty(display_eq, use_unicode=False)}\\n\\n" # Use the clean display version
+            f"{sympy.pretty(display_eq, use_unicode=False)}\\n\\n"
             f"3. Solving and Simplifying...\\n\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"
             f"Final form: {target_symbol} = {final_law}\\n\\n"
-            f"Note: Any dimensionless geometric factors (e.g., 1/2, 8*pi) must be included in the initial postulate."
+            f"Note: Any dimensionless geometric factors must be included in the initial postulate."
         )
         return output.strip()
     except Exception as e:
@@ -138,7 +138,6 @@ postulateInput.addEventListener("keyup", (event) => {
 // --- UI Interaction Logic ---
 document.addEventListener('DOMContentLoaded', function() {
     
-    // --- Modal Popup Logic ---
     const modal = document.getElementById("axesModal");
     const link = document.getElementById("showAxesLink");
     const closeButton = document.querySelector(".close-button");
@@ -158,7 +157,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- Dropdown Logic ---
     const selector = document.getElementById("postulateSelector");
     if (selector) {
         selector.addEventListener('change', function() {

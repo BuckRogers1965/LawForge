@@ -23,7 +23,7 @@ VARIABLE_TO_PLANCK_UNIT = {
 
 const deriver_py = `
 import sympy
-from sympy import simplify
+from sympy import simplify, pi
 from sympy.parsing.sympy_parser import parse_expr, standard_transformations, implicit_multiplication_application
 
 def parse_postulate(postulate_string):
@@ -32,33 +32,36 @@ def parse_postulate(postulate_string):
     target_symbol = sympy.Symbol(target_str, positive=True, real=True)
     transformations = (standard_transformations + (implicit_multiplication_application,))
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T'] }
+    local_symbols['pi'] = pi
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
     try:
         target_symbol, expression = parse_postulate(postulate_string)
+        dimensional_vars = {s for s in expression.free_symbols if str(s) in VARIABLE_TO_PLANCK_UNIT}
+        geometric_factor = expression.xreplace({var: 1 for var in dimensional_vars}) if dimensional_vars else expression
+        dimensional_part = expression / geometric_factor
         target_planck_key = VARIABLE_TO_PLANCK_UNIT.get(str(target_symbol))
         if not target_planck_key: raise ValueError(f"Unknown target variable: {target_symbol}")
         lhs_normalized = target_symbol / PLANCK_UNITS[target_planck_key]
-        subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in expression.free_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-        rhs_normalized = expression.subs(subs_dict)
+        subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in dimensional_part.free_symbols}
+        rhs_normalized = dimensional_part.subs(subs_dict)
         dimensionless_eq = sympy.Eq(lhs_normalized, rhs_normalized)
         solution = sympy.solve(dimensionless_eq, target_symbol)
         if not solution: raise ValueError("Could not solve for the target variable.")
         simplified_solution = simplify(solution[0])
-        final_law = sympy.Symbol('k') * simplified_solution
+        final_law = simplified_solution * geometric_factor
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
             f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
             f"2. Formulating Dimensionless Equation:\\n"
             f"{sympy.pretty(dimensionless_eq, use_unicode=False)}\\n\\n"
-            f"3. Solving and Simplifying...\\n\\n"
+            f"3. Solving and Re-applying Geometric Factor...\\n\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"
-            f"Final form: {target_symbol} = {final_law}\\n\\n"
-            f"Note: 'k' represents a dimensionless geometric constant (e.g., 1/2, 8*pi) not derived by this calculus."
+            f"Final form: {target_symbol} = {final_law}"
         )
         return output.strip()
     except Exception as e:
@@ -118,9 +121,11 @@ postulateInput.addEventListener("keyup", (event) => {
     if (event.key === "Enter") { event.preventDefault(); deriveButton.click(); }
 });
 
-// --- Modal Popup Logic ---
-// This code now runs after the HTML is fully parsed, which fixes the error.
+// --- UI Interaction Logic ---
+// This code now runs after the HTML is fully parsed, which fixes any potential errors.
 document.addEventListener('DOMContentLoaded', function() {
+    
+    // --- Modal Popup Logic ---
     const modal = document.getElementById("axesModal");
     const link = document.getElementById("showAxesLink");
     const closeButton = document.querySelector(".close-button");
@@ -138,5 +143,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.style.display = "none";
             }
         }
+    }
+
+    // --- NEW DROPDOWN LOGIC ---
+    const selector = document.getElementById("postulateSelector");
+    if (selector) {
+        selector.addEventListener('change', function() {
+            const selectedValue = this.value;
+            if (selectedValue) {
+                postulateInput.value = selectedValue;
+                runDerivation(); // Automatically run derivation on selection
+            }
+        });
     }
 });

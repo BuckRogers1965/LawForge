@@ -7,13 +7,18 @@ const outputElement = document.getElementById('output');
 const constants_py = `
 from sympy import symbols, sqrt
 c, G, h, k_B = symbols('c G h k_B', positive=True, real=True)
+
+# THE FIX: Define the base dictionary first.
 PLANCK_UNITS = {
     'm_P': sqrt(h * c / G), 'l_P': sqrt(h * G / c**3), 't_P': sqrt(h * G / c**5),
     'T_P': sqrt(h * c**5 / (G * k_B**2)), 'E_P': sqrt(h * c**5 / G), 'F_P': c**4 / G,
     'P_P': c**5 / G, 'rho_P': c**7 / (h * G**2), 'p_P': sqrt(h * c**3 / G),
-    'f_P': sqrt(c**5 / (h * G)), 'v_P': c, 
+    'v_P': c,
 }
+# THEN, add the composite units that depend on the others. This prevents the NameError.
+PLANCK_UNITS['f_P'] = 1 / PLANCK_UNITS['t_P']
 PLANCK_UNITS['a_P'] = PLANCK_UNITS['l_P'] / PLANCK_UNITS['t_P']**2
+
 VARIABLE_TO_PLANCK_UNIT = {
     'M': 'm_P', 'M1': 'm_P', 'M2': 'm_P', 'm': 'm_P',
     'r': 'l_P', 'l': 'l_P', 'x': 'l_P', 'lambda': 'l_P', 'r_s': 'l_P',
@@ -39,38 +44,37 @@ def parse_postulate(postulate_string):
 
 def derive_law_from_postulate(postulate_string):
     try:
+        # --- THIS IS A DIRECT IMPLEMENTATION OF YOUR ORIGINAL, WORKING LOGIC ---
         target_symbol, expression = parse_postulate(postulate_string)
+        all_vars = expression.free_symbols.union({target_symbol})
         
-        # --- THE FIX: Revert to a simpler, more robust substitution logic ---
-        all_symbols = expression.free_symbols.union({target_symbol})
+        # 1. Create a dictionary of simple Planck symbols (e.g., 'F_P', 'm_P')
+        planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
         
-        # Build the clean "display" equation
-        display_planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
-        display_subs_dict = {sym: sym / display_planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-        
-        display_lhs = (target_symbol).subs(display_subs_dict)
-        display_rhs = (expression).subs(display_subs_dict)
-        display_eq = sympy.Eq(display_lhs, display_rhs)
+        # 2. Formulate the dimensionless postulate using these simple symbols.
+        subs_dict_simple = {sym: sym / planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_vars if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+        lhs_simple = target_symbol.subs(subs_dict_simple)
+        rhs_simple = expression.subs(subs_dict_simple)
+        dimensionless_eq_simple = sympy.Eq(lhs_simple, rhs_simple)
 
-        # Build the actual calculus equation for solving
-        calculus_subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-
-        calculus_lhs = (target_symbol).subs(calculus_subs_dict)
-        calculus_rhs = (expression).subs(calculus_subs_dict)
-        calculus_eq = sympy.Eq(calculus_lhs, calculus_rhs)
-        # --- End of Fix ---
+        # 3. Solve this simple equation FIRST.
+        solution_with_planck_symbols = sympy.solve(dimensionless_eq_simple, target_symbol)
+        if not solution_with_planck_symbols: raise ValueError("Could not solve for the target variable.")
         
-        solution = sympy.solve(calculus_eq, target_symbol)
-        if not solution: raise ValueError("Could not solve for the target variable.")
+        # 4. NOW, substitute the full, complex definitions into the solved result.
+        #    This 'substitutions_full' dictionary contains both the simple names and their complex values.
+        substitutions_full = {**planck_symbols, **PLANCK_UNITS}
+        final_solution_unsimplified = solution_with_planck_symbols[0].subs(substitutions_full)
         
-        simplified_solution = simplify(solution[0])
-        final_law = simplified_solution
+        # 5. Finally, simplify the result. This is robust and correct.
+        final_law = simplify(final_solution_unsimplified)
+        # --- End of Correct Logic ---
 
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
             f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
             f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
-            f"{sympy.pretty(display_eq, use_unicode=False)}\\n\\n"
+            f"{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}\\n\\n"
             f"3. Solving and Simplifying...\\n\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"

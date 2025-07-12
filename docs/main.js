@@ -39,29 +39,43 @@ def parse_postulate(postulate_string):
 def derive_law_from_postulate(postulate_string):
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-        dimensional_vars = {s for s in expression.free_symbols if str(s) in VARIABLE_TO_PLANCK_UNIT}
-        geometric_factor = expression.xreplace({var: 1 for var in dimensional_vars}) if dimensional_vars else expression
-        dimensional_part = expression / geometric_factor
-        target_planck_key = VARIABLE_TO_PLANCK_UNIT.get(str(target_symbol))
-        if not target_planck_key: raise ValueError(f"Unknown target variable: {target_symbol}")
-        lhs_normalized = target_symbol / PLANCK_UNITS[target_planck_key]
-        subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in dimensional_part.free_symbols}
-        rhs_normalized = dimensional_part.subs(subs_dict)
-        dimensionless_eq = sympy.Eq(lhs_normalized, rhs_normalized)
-        solution = sympy.solve(dimensionless_eq, target_symbol)
+
+        # --- THE FIX: Build a separate, clean "display" equation ---
+        # 1. Create simple symbols for display (e.g., m_P, l_P)
+        display_planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
+        target_planck_key_str = VARIABLE_TO_PLANCK_UNIT.get(str(target_symbol))
+        if not target_planck_key_str: raise ValueError(f"Unknown target variable: {target_symbol}")
+
+        # 2. Build the "display" version of the equation for printing
+        display_lhs = target_symbol / display_planck_symbols[target_planck_key_str]
+        display_subs_dict = {sym: sym / display_planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in expression.free_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+        display_rhs = expression.subs(display_subs_dict)
+        display_eq = sympy.Eq(display_lhs, display_rhs)
+        # --- End of Display Fix ---
+        
+        # Now, build the actual equation for calculation with full sqrt definitions
+        calculus_lhs = target_symbol / PLANCK_UNITS[target_planck_key_str]
+        calculus_subs_dict = {sym: sym / PLANCK_UNITS[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in expression.free_symbols if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+        calculus_rhs = expression.subs(calculus_subs_dict)
+        calculus_eq = sympy.Eq(calculus_lhs, calculus_rhs)
+        
+        solution = sympy.solve(calculus_eq, target_symbol)
         if not solution: raise ValueError("Could not solve for the target variable.")
+        
         simplified_solution = simplify(solution[0])
-        final_law = simplified_solution * geometric_factor
+        final_law = simplified_solution
+
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
             f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
-            f"2. Formulating Dimensionless Equation:\\n"
-            f"{sympy.pretty(dimensionless_eq, use_unicode=False)}\\n\\n"
-            f"3. Solving and Re-applying Geometric Factor...\\n\\n"
+            f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
+            f"{sympy.pretty(display_eq, use_unicode=False)}\\n\\n" # Use the clean display version
+            f"3. Solving and Simplifying...\\n\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"
-            f"Final form: {target_symbol} = {final_law}"
+            f"Final form: {target_symbol} = {final_law}\\n\\n"
+            f"Note: Any dimensionless geometric factors (e.g., 1/2, 8*pi) must be included in the initial postulate."
         )
         return output.strip()
     except Exception as e:
@@ -122,7 +136,6 @@ postulateInput.addEventListener("keyup", (event) => {
 });
 
 // --- UI Interaction Logic ---
-// This code now runs after the HTML is fully parsed, which fixes any potential errors.
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- Modal Popup Logic ---
@@ -145,14 +158,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- NEW DROPDOWN LOGIC ---
+    // --- Dropdown Logic ---
     const selector = document.getElementById("postulateSelector");
     if (selector) {
         selector.addEventListener('change', function() {
             const selectedValue = this.value;
             if (selectedValue) {
                 postulateInput.value = selectedValue;
-                runDerivation(); // Automatically run derivation on selection
+                runDerivation();
             }
         });
     }

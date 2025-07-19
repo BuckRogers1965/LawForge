@@ -18,17 +18,14 @@ PLANCK_UNITS = {
 # THEN, add the composite units that depend on the others. This prevents the NameError.
 PLANCK_UNITS['f_P'] = 1 / PLANCK_UNITS['t_P']
 PLANCK_UNITS['a_P'] = PLANCK_UNITS['l_P'] / PLANCK_UNITS['t_P']**2
-
-# Fine structure constant in SI units: α = e²/(4πε₀ℏc) where ℏ = h/(2π)
-# So α = e²/(4πε₀ℏc) = e²/(4πε₀(h/2π)c) = e²/(2ε₀hc)
-ALPHA_SI = e**2 / (2 * epsilon_0 * h * c)
+PLANCK_UNITS['alpha'] = e**2 / (2 * epsilon_0 * h * c)
 
 VARIABLE_TO_PLANCK_UNIT = {
     'M': 'm_P', 'M1': 'm_P', 'M2': 'm_P', 'm': 'm_P',
     'r': 'l_P', 'l': 'l_P', 'x': 'l_P', 'lambda': 'l_P', 'r_s': 'l_P',
     't': 't_P', 'T': 'T_P', 'E': 'E_P', 'F': 'F_P', 'P': 'P_P',
     'rho': 'rho_P', 'p': 'p_P', 'a': 'a_P', 'v': 'v_P', 'f': 'f_P',
-    'alpha': 'alpha', 'c': 'c', 'h': 'h', 'G': 'G', 'k_B': 'k_B', 'e': 'e', 'epsilon_0': 'epsilon_0',
+    'alpha': 'alpha',
 }
 `;
 
@@ -51,19 +48,7 @@ def derive_law_from_postulate(postulate_string):
     try:
         # --- THIS IS A DIRECT IMPLEMENTATION OF YOUR ORIGINAL, WORKING LOGIC ---
         target_symbol, expression = parse_postulate(postulate_string)
-        
-        # Replace alpha with its SI unit formula before proceeding
-        alpha_symbol = sympy.Symbol('alpha')
-        alpha_used = alpha_symbol in expression.free_symbols or target_symbol == alpha_symbol
-        
-        if alpha_symbol in expression.free_symbols:
-            expression = expression.subs(alpha_symbol, ALPHA_SI)
-        if target_symbol == alpha_symbol:
-            target_symbol = ALPHA_SI
-            
-        # Update all_vars after alpha substitution
         all_vars = expression.free_symbols.union({target_symbol})
-
         
         # 1. Create a dictionary of simple Planck symbols (e.g., 'F_P', 'm_P')
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
@@ -87,9 +72,6 @@ def derive_law_from_postulate(postulate_string):
         final_law = simplify(final_solution_unsimplified)
         # --- End of Correct Logic ---
 
-        # Check if alpha was used in the postulate for display purposes
-        alpha_note = "\\n\\nNote: α (fine structure constant) = e²/(2ε₀hc) was automatically expanded to SI units." if alpha_used else ""
-
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
             f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
@@ -100,7 +82,7 @@ def derive_law_from_postulate(postulate_string):
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"
             f"Final form: {target_symbol} = {final_law}\\n\\n"
-            f"Note: Any dimensionless geometric factors must be included in the initial postulate.{alpha_note}"
+            f"Note: Any dimensionless geometric factors must be included in the initial postulate."
         )
         return output.strip()
     except Exception as e:

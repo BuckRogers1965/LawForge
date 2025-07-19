@@ -49,6 +49,11 @@ def derive_law_from_postulate(postulate_string):
         # --- THIS IS A DIRECT IMPLEMENTATION OF YOUR ORIGINAL, WORKING LOGIC ---
         target_symbol, expression = parse_postulate(postulate_string)
         all_vars = expression.free_symbols.union({target_symbol})
+
+        #this block fixes alpha becuase it is dimensionless being promoted to dimensions
+        alpha_symbol = sympy.Symbol('alpha')
+        if alpha_symbol in expression.free_symbols:
+            expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
         
         # 1. Create a dictionary of simple Planck symbols (e.g., 'F_P', 'm_P')
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}

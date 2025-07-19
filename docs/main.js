@@ -39,36 +39,45 @@ def parse_postulate(postulate_string):
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T', 'alpha'] }
     local_symbols['pi'] = pi
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
-    
-    # Replace 'alpha' with its definition immediately after parsing.
-    alpha_symbol = sympy.Symbol('alpha')
-    if alpha_symbol in expression.free_symbols:
-        expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
-
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
+    diagnostics = []
     try:
         target_symbol, expression = parse_postulate(postulate_string)
+        diagnostics.append(f"[DIAGNOSTIC] Initial parsed expression: {expression}")
+
+        # FUCKING FIX IS HERE: REPLACE ALPHA WITH ITS DEFINITION FIRST.
+        alpha_symbol = sympy.Symbol('alpha')
+        if alpha_symbol in expression.free_symbols:
+            expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
+            diagnostics.append(f"[DIAGNOSTIC] Expression after substituting alpha definition: {expression}")
         
         all_vars = expression.free_symbols.union({target_symbol})
+        diagnostics.append(f"[DIAGNOSTIC] All free symbols to process: {all_vars}")
         
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
         
         subs_dict_simple = {sym: sym / planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_vars if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
+        diagnostics.append(f"[DIAGNOSTIC] Normalization dictionary: {subs_dict_simple}")
+        
         lhs_simple = target_symbol.subs(subs_dict_simple)
         rhs_simple = expression.subs(subs_dict_simple)
         dimensionless_eq_simple = sympy.Eq(lhs_simple, rhs_simple)
+        diagnostics.append(f"[DIAGNOSTIC] Constructed dimensionless equation: {dimensionless_eq_simple}")
 
         solution_with_planck_symbols = sympy.solve(dimensionless_eq_simple, target_symbol)
         if not solution_with_planck_symbols: raise ValueError("Could not solve for the target variable.")
+        diagnostics.append(f"[DIAGNOSTIC] Solved for target (in Planck symbols): {solution_with_planck_symbols[0]}")
         
         substitutions_full = {**planck_symbols, **PLANCK_UNITS}
         final_solution_unsimplified = solution_with_planck_symbols[0].subs(substitutions_full)
+        diagnostics.append(f"[DIAGNOSTIC] After substituting full Planck definitions (unsimplified): {final_solution_unsimplified}")
         
         final_law = simplify(final_solution_unsimplified)
+        diagnostics.append(f"[DIAGNOSTIC] Final simplified law: {final_law}")
 
-        # Use the original postulate string for display purposes, as 'expression' has been modified.
+        # Use the original postulate string for display purposes
         original_target, original_expression = parse_postulate(postulate_string)
 
         output = (
@@ -77,6 +86,10 @@ def derive_law_from_postulate(postulate_string):
             f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
             f"{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}\\n\\n"
             f"3. Solving and Simplifying...\\n\\n"
+            f"------------------------------------\\n"
+            f"   DIAGNOSTIC OUTPUT\\n"
+            f"------------------------------------\\n"
+            f"{'\\n'.join(diagnostics)}\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"

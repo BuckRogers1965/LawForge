@@ -39,19 +39,19 @@ def parse_postulate(postulate_string):
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T', 'alpha'] }
     local_symbols['pi'] = pi
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
+    
+    # Replace 'alpha' with its definition immediately after parsing.
+    alpha_symbol = sympy.Symbol('alpha')
+    if alpha_symbol in expression.free_symbols:
+        expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
+
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
     diagnostics = []
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-        diagnostics.append(f"[DIAGNOSTIC] Initial parsed expression: {expression}")
-
-        # FIX 1: REPLACE ALPHA WITH ITS DEFINITION FIRST.
-        alpha_symbol = sympy.Symbol('alpha')
-        if alpha_symbol in expression.free_symbols:
-            expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
-            diagnostics.append(f"[DIAGNOSTIC] Expression after substituting alpha definition: {expression}")
+        diagnostics.append(f"[DIAGNOSTIC] Expression after parsing and initial substitution: {expression}")
         
         all_vars = expression.free_symbols.union({target_symbol})
         diagnostics.append(f"[DIAGNOSTIC] All free symbols to process: {all_vars}")
@@ -79,7 +79,6 @@ def derive_law_from_postulate(postulate_string):
 
         original_target, original_expression = parse_postulate(postulate_string)
 
-        # FIX 2: PREPARE THE DIAGNOSTIC STRING SEPARATELY TO AVOID F-STRING SYNTAX ERROR.
         diagnostic_text = "\\n".join(diagnostics)
 
         output = (

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Testing alpah extension: LawForge: The Physics Law Discovery Engine</title>
+    <title>LawForge: The Physics Law Discovery Engine</title>
     <link rel="stylesheet" href="style.css">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YFQC1JRGM7"></script>
@@ -48,10 +48,9 @@
                         <option value="T ~ 1/(16*pi**2*M)">Hawking Temp. (Full Postulate)</option>
                         <option value="rho ~ T**4 ">Stephan Boltzman gas pressure law</option>
                     </optgroup>
-                    <optgroup label="Electromagnetic & Fine Structure">
-                        <option value="E ~ alpha*M">Fine Structure Energy Relation</option>
-                        <option value="r ~ 1/(alpha*M)">Bohr Radius Relation</option>
-                        <option value="F ~ alpha**2*M**2/r**2">Electromagnetic Force</option>
+                    <optgroup label="Atomic Physics & Fine Structure">
+                        <option value="r ~ 1/(alpha*M)">Bohr Radius (a₀ = ℏ/(mₑcα))</option>
+                        <option value="r ~ alpha/M">Classical Electron Radius Relation</option>
                     </optgroup>
                     <optgroup label="Fluid Mechanics and Turbulence Theory">
                         <option value="E ~ (ε / (l_P**2 * t_P**(-3)))**(2/3) * 1/(r**(5/3))">Kolmogorov's formula</option>
@@ -97,11 +96,11 @@
                     <tr><td>Fine Structure Constant</td><td><code>alpha</code> (automatically expanded to e²/(4πε₀ℏc))</td></tr>
                 </tbody>
             </table>
-            <p><strong>Note:</strong> When you use <code>alpha</code> in a postulate, it will be automatically replaced with its full SI unit expression: <code>e²/(4πε₀ℏc)</code>, where:</p>
+            <p><strong>Note:</strong> When you use <code>alpha</code> in a postulate, it will be automatically replaced with its full SI unit expression: <code>e²/(2ε₀hc)</code>, where:</p>
             <ul>
                 <li><code>e</code> = elementary charge</li>
                 <li><code>ε₀</code> = permittivity of free space</li>
-                <li><code>ℏ</code> = reduced Planck constant</li>
+                <li><code>h</code> = Planck constant</li>
                 <li><code>c</code> = speed of light</li>
             </ul>
         </div>

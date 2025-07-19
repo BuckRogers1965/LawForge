@@ -19,7 +19,8 @@ PLANCK_UNITS = {
 PLANCK_UNITS['f_P'] = 1 / PLANCK_UNITS['t_P']
 PLANCK_UNITS['a_P'] = PLANCK_UNITS['l_P'] / PLANCK_UNITS['t_P']**2
 
-# Fine structure constant in SI units: α = e²/(4πε₀ℏc)
+# Fine structure constant in SI units: α = e²/(4πε₀ℏc) where ℏ = h/(2π)
+# So α = e²/(4πε₀ℏc) = e²/(4πε₀(h/2π)c) = e²/(2ε₀hc)
 ALPHA_SI = e**2 / (2 * epsilon_0 * h * c)
 
 VARIABLE_TO_PLANCK_UNIT = {
@@ -56,8 +57,10 @@ def derive_law_from_postulate(postulate_string):
             expression = expression.subs(alpha_symbol, ALPHA_SI)
         if target_symbol == alpha_symbol:
             target_symbol = ALPHA_SI
-        
+            
+        # Update all_vars after alpha substitution
         all_vars = expression.free_symbols.union({target_symbol})
+
         
         # 1. Create a dictionary of simple Planck symbols (e.g., 'F_P', 'm_P')
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
@@ -83,7 +86,7 @@ def derive_law_from_postulate(postulate_string):
 
         # Check if alpha was used in the postulate for display purposes
         alpha_used = 'alpha' in postulate_string
-        alpha_note = "\\n\\nNote: α (fine structure constant) = e²/(4πε₀ℏc) was automatically expanded to SI units." if alpha_used else ""
+        alpha_note = "\\n\\nNote: α (fine structure constant) = e²/(2ε₀hc) was automatically expanded to SI units." if alpha_used else ""
 
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"

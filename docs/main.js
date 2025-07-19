@@ -39,16 +39,17 @@ def parse_postulate(postulate_string):
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T', 'alpha'] }
     local_symbols['pi'] = pi
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
+    
+    # Replace 'alpha' with its definition immediately after parsing.
+    alpha_symbol = sympy.Symbol('alpha')
+    if alpha_symbol in expression.free_symbols:
+        expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
+
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-
-        # Directly substitute the definition of 'alpha' if it exists in the expression.
-        alpha_symbol = sympy.Symbol('alpha')
-        if alpha_symbol in expression.free_symbols:
-            expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
         
         all_vars = expression.free_symbols.union({target_symbol})
         
@@ -67,9 +68,12 @@ def derive_law_from_postulate(postulate_string):
         
         final_law = simplify(final_solution_unsimplified)
 
+        # Use the original postulate string for display purposes, as 'expression' has been modified.
+        original_target, original_expression = parse_postulate(postulate_string)
+
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
-            f"1. Conceptual Postulate:\\n   {target_symbol} ~ {expression}\\n\\n"
+            f"1. Conceptual Postulate:\\n   {original_target} ~ {original_expression}\\n\\n"
             f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
             f"{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}\\n\\n"
             f"3. Solving and Simplifying...\\n\\n"

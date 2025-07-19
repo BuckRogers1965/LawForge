@@ -28,6 +28,7 @@ VARIABLE_TO_PLANCK_UNIT = {
     'r': 'l_P', 'l': 'l_P', 'x': 'l_P', 'lambda': 'l_P', 'r_s': 'l_P',
     't': 't_P', 'T': 'T_P', 'E': 'E_P', 'F': 'F_P', 'P': 'P_P',
     'rho': 'rho_P', 'p': 'p_P', 'a': 'a_P', 'v': 'v_P', 'f': 'f_P',
+    'alpha': 'alpha', 'c': 'c', 'h': 'h', 'G': 'G', 'k_B': 'k_B', 'e': 'e', 'epsilon_0': 'epsilon_0',
 }
 `;
 
@@ -53,6 +54,8 @@ def derive_law_from_postulate(postulate_string):
         
         # Replace alpha with its SI unit formula before proceeding
         alpha_symbol = sympy.Symbol('alpha')
+        alpha_used = alpha_symbol in expression.free_symbols or target_symbol == alpha_symbol
+        
         if alpha_symbol in expression.free_symbols:
             expression = expression.subs(alpha_symbol, ALPHA_SI)
         if target_symbol == alpha_symbol:
@@ -85,7 +88,6 @@ def derive_law_from_postulate(postulate_string):
         # --- End of Correct Logic ---
 
         # Check if alpha was used in the postulate for display purposes
-        alpha_used = 'alpha' in postulate_string
         alpha_note = "\\n\\nNote: α (fine structure constant) = e²/(2ε₀hc) was automatically expanded to SI units." if alpha_used else ""
 
         output = (

@@ -36,22 +36,23 @@ def parse_postulate(postulate_string):
     target_str, expr_str = [s.strip() for s in postulate_string.split('~')]
     target_symbol = sympy.Symbol(target_str, positive=True, real=True)
     transformations = (standard_transformations + (implicit_multiplication_application,))
-    local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T', 'alpha'] }
-    local_symbols['pi'] = pi
-    expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
     
-    # Replace 'alpha' with its definition immediately after parsing.
-    alpha_symbol = sympy.Symbol('alpha')
-    if alpha_symbol in expression.free_symbols:
-        expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
-
+    # Define the symbols the parser can recognize.
+    local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T'] }
+    local_symbols['pi'] = pi
+    
+    # Add 'alpha' to the parser's dictionary, but map it directly to its definition.
+    # This replaces 'alpha' with its full formula at the moment of parsing.
+    local_symbols['alpha'] = PLANCK_UNITS['alpha']
+    
+    expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
     diagnostics = []
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-        diagnostics.append(f"[DIAGNOSTIC] Expression after parsing and initial substitution: {expression}")
+        diagnostics.append(f"[DIAGNOSTIC] Expression after parsing: {expression}")
         
         all_vars = expression.free_symbols.union({target_symbol})
         diagnostics.append(f"[DIAGNOSTIC] All free symbols to process: {all_vars}")
@@ -77,13 +78,13 @@ def derive_law_from_postulate(postulate_string):
         final_law = simplify(final_solution_unsimplified)
         diagnostics.append(f"[DIAGNOSTIC] Final simplified law: {final_law}")
 
-        original_target, original_expression = parse_postulate(postulate_string)
+        original_target_str, original_expr_str = [s.strip() for s in postulate_string.split('~')]
 
         diagnostic_text = "\\n".join(diagnostics)
 
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
-            f"1. Conceptual Postulate:\\n   {original_target} ~ {original_expression}\\n\\n"
+            f"1. Conceptual Postulate:\\n   {original_target_str} ~ {original_expr_str}\\n\\n"
             f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
             f"{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}\\n\\n"
             f"3. Solving and Simplifying...\\n\\n"

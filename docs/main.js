@@ -3,6 +3,7 @@
 const postulateInput = document.getElementById('postulateInput');
 const deriveButton = document.getElementById('deriveButton');
 const outputElement = document.getElementById('output');
+const debugCheckbox = document.getElementById('debugCheckbox'); // Added reference to checkbox
 
 const constants_py = `
 from sympy import symbols, sqrt
@@ -37,68 +38,72 @@ def parse_postulate(postulate_string):
     target_symbol = sympy.Symbol(target_str, positive=True, real=True)
     transformations = (standard_transformations + (implicit_multiplication_application,))
     
-    # Define the symbols the parser can recognize.
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T'] }
     local_symbols['pi'] = pi
-    
-    # Add 'alpha' to the parser's dictionary, but map it directly to its definition.
-    # This replaces 'alpha' with its full formula at the moment of parsing.
     local_symbols['alpha'] = PLANCK_UNITS['alpha']
     
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
     return target_symbol, expression
 
-def derive_law_from_postulate(postulate_string):
+def derive_law_from_postulate(postulate_string, debug=False):
     diagnostics = []
     try:
+        # For display, parse the original string without substituting alpha
+        original_target, original_expression = parse_postulate(postulate_string.replace(PLANCK_UNITS['alpha'].__str__(), 'alpha'))
+        
         target_symbol, expression = parse_postulate(postulate_string)
-        diagnostics.append(f"[DIAGNOSTIC] Expression after parsing: {expression}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] Expression after parsing and alpha substitution: {expression}")
         
         all_vars = expression.free_symbols.union({target_symbol})
-        diagnostics.append(f"[DIAGNOSTIC] All free symbols to process: {all_vars}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] All free symbols to process: {all_vars}")
         
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}
         
         subs_dict_simple = {sym: sym / planck_symbols[VARIABLE_TO_PLANCK_UNIT.get(str(sym))] for sym in all_vars if VARIABLE_TO_PLANCK_UNIT.get(str(sym))}
-        diagnostics.append(f"[DIAGNOSTIC] Normalization dictionary: {subs_dict_simple}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] Normalization dictionary: {subs_dict_simple}")
         
         lhs_simple = target_symbol.subs(subs_dict_simple)
         rhs_simple = expression.subs(subs_dict_simple)
         dimensionless_eq_simple = sympy.Eq(lhs_simple, rhs_simple)
-        diagnostics.append(f"[DIAGNOSTIC] Constructed dimensionless equation: {dimensionless_eq_simple}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] Constructed dimensionless equation: {dimensionless_eq_simple}")
 
         solution_with_planck_symbols = sympy.solve(dimensionless_eq_simple, target_symbol)
         if not solution_with_planck_symbols: raise ValueError("Could not solve for the target variable.")
-        diagnostics.append(f"[DIAGNOSTIC] Solved for target (in Planck symbols): {solution_with_planck_symbols[0]}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] Solved for target (in Planck symbols): {solution_with_planck_symbols[0]}")
         
         substitutions_full = {**planck_symbols, **PLANCK_UNITS}
         final_solution_unsimplified = solution_with_planck_symbols[0].subs(substitutions_full)
-        diagnostics.append(f"[DIAGNOSTIC] After substituting full Planck definitions (unsimplified): {final_solution_unsimplified}")
+        if debug: diagnostics.append(f"[DIAGNOSTIC] After substituting full Planck definitions (unsimplified): {final_solution_unsimplified}")
         
         final_law = simplify(final_solution_unsimplified)
-        diagnostics.append(f"[DIAGNOSTIC] Final simplified law: {final_law}")
-
-        original_target_str, original_expr_str = [s.strip() for s in postulate_string.split('~')]
+        if debug: diagnostics.append(f"[DIAGNOSTIC] Final simplified law: {final_law}")
 
         diagnostic_text = "\\n".join(diagnostics)
 
-        output = (
-            f"Deriving physical law from postulate: {postulate_string}\\n\\n"
-            f"1. Conceptual Postulate:\\n   {original_target_str} ~ {original_expr_str}\\n\\n"
-            f"2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n"
-            f"{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}\\n\\n"
-            f"3. Solving and Simplifying...\\n\\n"
-            f"------------------------------------\\n"
-            f"   DIAGNOSTIC OUTPUT\\n"
-            f"------------------------------------\\n"
-            f"{diagnostic_text}\\n"
-            f"------------------------------------\\n"
-            f"   RESULTING PHYSICAL LAW\\n"
-            f"------------------------------------\\n"
-            f"Final form: {target_symbol} = {final_law}\\n\\n"
-            f"Note: Any dimensionless geometric factors must be included in the initial postulate."
-        )
-        return output.strip()
+        output_parts = [
+            f"Deriving physical law from postulate: {postulate_string}",
+            f"\\n1. Conceptual Postulate:\\n   {original_target} ~ {original_expression}",
+            f"\\n2. Formulating Dimensionless Equation (Normalizing by Planck Units):\\n{sympy.pretty(dimensionless_eq_simple, use_unicode=False)}",
+            "\\n3. Solving and Simplifying..."
+        ]
+
+        if debug:
+            output_parts.extend([
+                "\\n------------------------------------",
+                "   DIAGNOSTIC OUTPUT",
+                "------------------------------------",
+                diagnostic_text
+            ])
+
+        output_parts.extend([
+            "\\n------------------------------------",
+            "   RESULTING PHYSICAL LAW",
+            "------------------------------------",
+            f"Final form: {target_symbol} = {final_law}",
+            "\\nNote: Any dimensionless geometric factors must be included in the initial postulate."
+        ])
+        
+        return "\\n".join(output_parts)
     except Exception as e:
         import traceback
         return f"ERROR: {e}\\n\\nTraceback:\\n{traceback.format_exc()}"
@@ -133,6 +138,8 @@ async function runDerivation() {
         deriveButton.disabled = false; return;
     }
     const postulate = postulateInput.value;
+    const debug = debugCheckbox.checked; // Check the state of the checkbox
+    
     if (!postulate) {
         outputElement.textContent = "Please enter a postulate.";
         deriveButton.disabled = false; return;
@@ -140,7 +147,8 @@ async function runDerivation() {
     outputElement.textContent = "Deriving law...";
     try {
         pyodide.globals.set("postulate_string", postulate);
-        const pythonCode = `result = derive_law_from_postulate(postulate_string)`;
+        pyodide.globals.set("debug_flag", debug); // Pass the debug flag to Python
+        const pythonCode = `result = derive_law_from_postulate(postulate_string, debug=debug_flag)`; // Call with the debug flag
         await pyodide.runPythonAsync(pythonCode);
         const result = pyodide.globals.get("result");
         outputElement.textContent = result;

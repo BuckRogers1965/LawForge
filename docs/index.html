@@ -28,7 +28,6 @@
             </p>
             <p class="description">Unsure which symbols to use? <a href="#" id="showAxesLink">Click here for a list of allowed axes</a>.</p>
             
-            <!-- THE NEW DROPDOWN MENU -->
             <div class="selector-group">
                 <label for="postulateSelector">Select a known law to begin:</label>
                 <select id="postulateSelector">
@@ -53,7 +52,7 @@
                         <option value="r ~ alpha/M">Classical Electron Radius Relation</option>
                     </optgroup>
                     <optgroup label="Fluid Mechanics and Turbulence Theory">
-                        <option value="E ~ (ε / (l_P**2 * t_P**(-3)))**(2/3) * 1/(r**(5/3))">Kolmogorov's formula</option>
+                        <option value="E ~ (epsilon / (l_P**2 * t_P**(-3)))**(2/3) * 1/(r**(5/3))">Kolmogorov's formula</option>
                     </optgroup>
                 </select>
             </div>
@@ -61,6 +60,12 @@
             <div class="input-group">
                 <input type="text" id="postulateInput" placeholder="e.g., T ~ 1/M or E ~ alpha*M" size="40">
                 <button id="deriveButton" onclick="runDerivation()">Derive Law</button>
+            </div>
+            
+            <!-- ADDED DEBUG CHECKBOX HERE -->
+            <div class="debug-group">
+                <input type="checkbox" id="debugCheckbox">
+                <label for="debugCheckbox">Show Debug Info</label>
             </div>
 
             <hr>
@@ -73,7 +78,6 @@
         </footer>
     </div>
 
-    <!-- The Modal/Popup Structure -->
     <div id="axesModal" class="modal">
         <div class="modal-content">
             <span class="close-button">×</span>
@@ -93,7 +97,7 @@
                     <tr><td>Acceleration</td><td><code>a</code></td></tr>
                     <tr><td>Velocity</td><td><code>v</code></td></tr>
                     <tr><td>Frequency</td><td><code>f</code></td></tr>
-                    <tr><td>Fine Structure Constant</td><td><code>alpha</code> (automatically expanded to e²/(4πε₀ℏc))</td></tr>
+                    <tr><td>Fine Structure Constant</td><td><code>alpha</code> (automatically expanded)</td></tr>
                 </tbody>
             </table>
             <p><strong>Note:</strong> When you use <code>alpha</code> in a postulate, it will be automatically replaced with its full SI unit expression: <code>e²/(2ε₀hc)</code>, where:</p>

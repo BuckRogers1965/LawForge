@@ -8,12 +8,14 @@ const constants_py = `
 from sympy import symbols, sqrt
 c, G, h, k_B, e, epsilon_0 = symbols('c G h k_B e epsilon_0', positive=True, real=True)
 
+# THE FIX: Define the base dictionary first.
 PLANCK_UNITS = {
     'm_P': sqrt(h * c / G), 'l_P': sqrt(h * G / c**3), 't_P': sqrt(h * G / c**5),
     'T_P': sqrt(h * c**5 / (G * k_B**2)), 'E_P': sqrt(h * c**5 / G), 'F_P': c**4 / G,
     'P_P': c**5 / G, 'rho_P': c**7 / (h * G**2), 'p_P': sqrt(h * c**3 / G),
     'v_P': c,
 }
+# THEN, add the composite units that depend on the others. This prevents the NameError.
 PLANCK_UNITS['f_P'] = 1 / PLANCK_UNITS['t_P']
 PLANCK_UNITS['a_P'] = PLANCK_UNITS['l_P'] / PLANCK_UNITS['t_P']**2
 PLANCK_UNITS['alpha'] = e**2 / (2 * epsilon_0 * h * c)
@@ -23,6 +25,7 @@ VARIABLE_TO_PLANCK_UNIT = {
     'r': 'l_P', 'l': 'l_P', 'x': 'l_P', 'lambda': 'l_P', 'r_s': 'l_P',
     't': 't_P', 'T': 'T_P', 'E': 'E_P', 'F': 'F_P', 'P': 'P_P',
     'rho': 'rho_P', 'p': 'p_P', 'a': 'a_P', 'v': 'v_P', 'f': 'f_P',
+    'alpha': 'alpha',
 }
 `;
 
@@ -39,19 +42,18 @@ def parse_postulate(postulate_string):
     local_symbols = { s: sympy.Symbol(s, positive=True, real=True) for s in ['M1', 'M2', 'r_s', 'M', 'm', 'r', 'l', 'x', 'lambda', 't', 'E', 'F', 'P', 'rho', 'p', 'a', 'v', 'f', 'T', 'alpha'] }
     local_symbols['pi'] = pi
     expression = parse_expr(expr_str, local_dict=local_symbols, transformations=transformations)
+    
+    # --- FUCKING FIX IS HERE ---
+    alpha_symbol = sympy.Symbol('alpha')
+    if alpha_symbol in expression.free_symbols:
+        expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
+    # --- END FUCKING FIX ---
+
     return target_symbol, expression
 
 def derive_law_from_postulate(postulate_string):
     try:
         target_symbol, expression = parse_postulate(postulate_string)
-        
-        # --- FIX STARTS HERE ---
-        # 1. Directly substitute the definition of 'alpha' if it exists.
-        alpha_symbol = sympy.Symbol('alpha')
-        if alpha_symbol in expression.free_symbols:
-            expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
-        # --- FIX ENDS HERE ---
-        
         all_vars = expression.free_symbols.union({target_symbol})
         
         planck_symbols = {key: sympy.Symbol(key) for key in PLANCK_UNITS.keys()}

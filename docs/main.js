@@ -47,7 +47,7 @@ def derive_law_from_postulate(postulate_string):
         target_symbol, expression = parse_postulate(postulate_string)
         diagnostics.append(f"[DIAGNOSTIC] Initial parsed expression: {expression}")
 
-        # FUCKING FIX IS HERE: REPLACE ALPHA WITH ITS DEFINITION FIRST.
+        # FIX 1: REPLACE ALPHA WITH ITS DEFINITION FIRST.
         alpha_symbol = sympy.Symbol('alpha')
         if alpha_symbol in expression.free_symbols:
             expression = expression.subs(alpha_symbol, PLANCK_UNITS['alpha'])
@@ -77,8 +77,10 @@ def derive_law_from_postulate(postulate_string):
         final_law = simplify(final_solution_unsimplified)
         diagnostics.append(f"[DIAGNOSTIC] Final simplified law: {final_law}")
 
-        # Use the original postulate string for display purposes
         original_target, original_expression = parse_postulate(postulate_string)
+
+        # FIX 2: PREPARE THE DIAGNOSTIC STRING SEPARATELY TO AVOID F-STRING SYNTAX ERROR.
+        diagnostic_text = "\\n".join(diagnostics)
 
         output = (
             f"Deriving physical law from postulate: {postulate_string}\\n\\n"
@@ -89,7 +91,7 @@ def derive_law_from_postulate(postulate_string):
             f"------------------------------------\\n"
             f"   DIAGNOSTIC OUTPUT\\n"
             f"------------------------------------\\n"
-            f"{'\\n'.join(diagnostics)}\\n"
+            f"{diagnostic_text}\\n"
             f"------------------------------------\\n"
             f"   RESULTING PHYSICAL LAW\\n"
             f"------------------------------------\\n"
